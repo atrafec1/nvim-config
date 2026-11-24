@@ -184,7 +184,7 @@ do
   -- Clear highlights on search when pressing <Esc> in normal mode
   --  See `:help hlsearch`
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-
+  vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd>w<CR><Esc>', { desc = 'Save file' })
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
   vim.diagnostic.config {
@@ -428,18 +428,21 @@ do
   -- change the command under that to load whatever the name of that colorscheme is.
   --
   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-  vim.pack.add { gh 'folke/tokyonight.nvim' }
-  ---@diagnostic disable-next-line: missing-fields
-  require('tokyonight').setup {
-    styles = {
-      comments = { italic = false }, -- Disable italics in comments
-    },
+  vim.pack.add { { src = gh 'rose-pine/neovim', name = 'rose-pine' } }
+
+  require('rose-pine').setup {
+    disable_background = true,
+    styles = { italic = false },
   }
+
+
+  vim.api.nvim_set_hl(0, 'Normal', { bg = 'none' })
+  vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 'none' })
 
   -- Load the colorscheme here.
   -- Like many other themes, this one has different styles, and you could load
   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-  vim.cmd.colorscheme 'tokyonight-night'
+  vim.cmd.colorscheme 'rose-pine-moon'
 
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
@@ -738,8 +741,16 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    gopls = {},
-    -- clangd = {},
+    gopls = {
+      settings = {
+        gopls = {
+          gofumpt = true,
+        },
+      },
+    },
+    jdtls = {},
+    clangd = {},
+    ols = {},
     -- pyright = {},
     -- tsc = {},
     --
@@ -783,6 +794,27 @@ do
       },
     },
   }
+
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*.go',
+  callback = function(args)
+    -- Organize imports
+    vim.lsp.buf.code_action({
+      context = {
+        only = { 'source.organizeImports' },
+        diagnostics = {},
+      },
+      apply = true,
+      bufnr = args.buf,
+    })
+
+    -- Format Go code
+    vim.lsp.buf.format({
+      bufnr = args.buf,
+      async = false,
+    })
+  end,
+})
 
   vim.pack.add {
     gh 'neovim/nvim-lspconfig',

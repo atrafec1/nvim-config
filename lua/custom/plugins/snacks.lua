@@ -1,20 +1,26 @@
--- Install Snacks.nvim using Neovim's built-in plugin manager
-vim.pack.add({
-  { src = 'https://github.com/folke/snacks.nvim' },
-})
+-- snacks.lua: terminal toggle with Ctrl+/
 
--- Enable only the terminal feature
-require('snacks').setup({
-  terminal = {
-    win = {
+vim.pack.add {
+  { src = 'https://github.com/folke/snacks.nvim' },
+}
+
+local Snacks = require 'snacks'
+
+Snacks.setup {
+  terminal = { enabled = true },
+  styles = {
+    terminal = {
       position = 'bottom',
       height = 15,
     },
   },
-})
+}
 
--- Toggle terminal with Ctrl+/
-vim.keymap.set({ 'n', 't' }, '<C-/>', function()
-  require('snacks').terminal.toggle()
-end, { desc = 'Toggle terminal' })
+local function toggle_term()
+  Snacks.terminal.toggle()
+end
 
+-- Many terminal emulators send Ctrl+/ as <C-_>, so map both.
+-- Mapping 't' mode is what lets the same key close it from inside the terminal.
+vim.keymap.set({ 'n', 't' }, '<C-/>', toggle_term, { desc = 'Toggle terminal' })
+vim.keymap.set({ 'n', 't' }, '<C-_>', toggle_term, { desc = 'Toggle terminal' })
